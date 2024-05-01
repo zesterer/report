@@ -961,6 +961,28 @@ mod tests {
     }
 
     #[test]
+    fn two_labels_without_messages_on_different_lines() {
+        let source = "apple\n== orange;";
+        let msg = Report::<Range<usize>>::build(ReportKind::Error, (), 0)
+            .with_config(no_color_and_ascii())
+            .with_message("can't compare apples with oranges")
+            .with_label(Label::new(0..5))
+            .with_label(Label::new(9..15))
+            .finish()
+            .write_to_string(Source::from(source));
+        assert_snapshot!(msg, @r###"
+        Error: can't compare apples with oranges
+           ,-[<unknown>:1:1]
+           |
+         1 | apple
+           | ^^^^^  
+         2 | == orange;
+           |    ^^^^^^  
+        ---'
+        "###);
+    }
+
+    #[test]
     fn two_labels_with_messages() {
         let source = "apple == orange;";
         let msg = Report::<Range<usize>>::build(ReportKind::Error, (), 0)
@@ -980,6 +1002,30 @@ mod tests {
            |   `-------------- This is an apple
            |             |    
            |             `---- This is an orange
+        ---'
+        "###);
+    }
+
+    #[test]
+    fn two_labels_with_messages_on_different_lines() {
+        let source = "apple ==\norange;";
+        let msg = Report::<Range<usize>>::build(ReportKind::Error, (), 0)
+            .with_config(no_color_and_ascii())
+            .with_message("can't compare apples with oranges")
+            .with_label(Label::new(0..5).with_message("This is an apple"))
+            .with_label(Label::new(9..15).with_message("This is an orange"))
+            .finish()
+            .write_to_string(Source::from(source));
+        assert_snapshot!(msg, @r###"
+        Error: can't compare apples with oranges
+           ,-[<unknown>:1:1]
+           |
+         1 | apple ==
+           | ^^|^^  
+           |   `---- This is an apple
+         2 | orange;
+           | ^^^|^^  
+           |    `---- This is an orange
         ---'
         "###);
     }
